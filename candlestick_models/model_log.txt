@@ -1,0 +1,147 @@
+Tips:
+- valid comparison: loss / val_loss.
+- invalid comparison: acc / val_acc.
+- due to presence of inequal class weight, and unsetted random seed value between image datagen run.
+
+Comparison:
+   loss    val_loss
+1  0.6932  0.6914
+2  0.6132  0.5668
+3  0.6140  0.5907
+4  0.6143  0.5745
+5  0.6159  0.5986
+6  0.6154  0.5796
+7  0.6156  0.6082
+8  0.6160  0.5882
+9  0.6166  0.6136
+10 0.6158  0.5656
+11 0.6145  0.6024
+12 0.6140  0.5499
+13 0.6233  0.6225
+14 0.6938  0.6952
+15 0.6131  0.6332
+
+model 1
+- Base model structure:
+    - 75x75 input
+    - 3 conv blocks (3x3 pool, 3 kernel size)
+- Total params: 24,777
+- 5545s 303ms/step - loss: 0.6932 - accuracy: 0.5312 - val_loss: 0.6914 - val_accuracy: 0.7532
+- Elapsed time: 1:32:25.174463
+    
+model 2
+- Add 1 more convolutional block (128) or 4th block
+- on top of model 1 structure
+- change pool_size to 2x2
+- Total params: 359,793
+- 4400s 240ms/step - loss: 0.6132 - accuracy: 0.5482 - val_loss: 0.5668 - val_accuracy: 0.6059
+- Elapsed time: 1:13:20.544292
+
+model 3
+- Add 1 more convolutional layer on top of existing conv layer stack (ex: from 16+16+BN+relu+Pool to 16+16+16+BN+relu+Pool)
+- based on model 2 structure
+- Total params: 621,473
+- 6343s 347ms/step - loss: 0.6140 - accuracy: 0.5412 - val_loss: 0.5907 - val_accuracy: 0.5746
+- Elapsed time: 1:45:42.720281
+
+model 4
+- Add 1 more convolutional block (256) or 5th block
+- on top of model 2 structure
+- Total params: 1,246,129
+- 4692s 256ms/step - loss: 0.6143 - accuracy: 0.5447 - val_loss: 0.5745 - val_accuracy: 0.6084
+- Elapsed time: 1:18:11.744495
+
+model 5
+- Add 1 more convolutional block (512) or 6th block
+- on top of model 4 structure
+- Total params: 2M+ (est.)
+- 7716s 422ms/step - loss: 0.6159 - accuracy: 0.5656 - val_loss: 0.5986 - val_accuracy: 0.7082
+- Elapsed time: 2:08:36.442700
+
+model 6
+- Using 0.25 filters multiplier to reduce parameters.
+- same structure with model 5
+- Total params: 300.000+ (est.)
+- 1931s 106ms/step - loss: 0.6154 - accuracy: 0.5654 - val_loss: 0.5796 - val_accuracy: 0.7491
+- Elapsed time: 0:32:11.618521
+
+model 7
+- Using 64x64 target image size to prevent pixel representation loss
+- directly compare to model 6 (same structure)
+- Total params: 300.000+ (est.)
+- 1611s 88ms/step - loss: 0.6156 - accuracy: 0.5563 - val_loss: 0.6082 - val_accuracy: 0.5660
+- Elapsed time: 0:26:51.522711
+
+model 8
+- Using 2 kernel size
+- directly compare to model 7 (same input & overall structure)
+- Total params: 140,857
+- 1508s 82ms/step - loss: 0.6160 - accuracy: 0.5629 - val_loss: 0.5882 - val_accuracy: 0.6153
+- Elapsed time: 0:25:08.474102
+
+model 9
+- stack 2 block of conv+conv+bn+relu before pooling
+- based on model 8 structure
+- Total params: 317,089
+- 2597s 142ms/step - loss: 0.6166 - accuracy: 0.5604 - val_loss: 0.6136 - val_accuracy: 0.5783
+Elapsed time: 0:43:17.668481
+
+model 10
+- same as model 8 structure
+- add rescale 1./255
+- Total params: 140,857
+- 1265s 69ms/step - loss: 0.6158 - accuracy: 0.5598 - val_loss: 0.5656 - val_accuracy: 0.6344
+- Elapsed time: 0:21:04.941690
+
+model 11
+- based on model 2 architecture (best loss/val_loss)
+- add seed=0
+- datagen: 64x64, rescale=1./255
+- filters_mult = 0.25
+- Total params: 30k+ (est.)
+- 1494s 82ms/step - loss: 0.6145 - accuracy: 0.5577 - val_loss: 0.6024 - val_accuracy: 0.5634
+- Elapsed time: 0:24:54.490240
+
+model 12
+- based on model 2 & model 11 architecture
+- modify filters_mult = 1 (try to mimic model 2 behavior, because some effort made with model 11, but because original model 2 long running time, lower scale model was used with model 11).
+- Total params: 359,793
+- 3687s 201ms/step - loss: 0.6140 - accuracy: 0.5435 - val_loss: 0.5499 - val_accuracy: 0.7531
+- Elapsed time: 1:01:26.696954
+
+model 13
+- based on model 2 & model 12
+- change kernel_size=2
+- Total params: 197,153
+- 2943s 161ms/step - loss: 0.6233 - accuracy: 0.5769 - val_loss: 0.6225 - val_accuracy: 0.5737
+- Elapsed time: 0:49:02.916251
+
+model 14
+- based on model 13
+- stack 2 block of conv+conv+bn+relu before pooling
+- Total params: 371,713
+- 6073s 332ms/step - loss: 0.6938 - accuracy: 0.5125 - val_loss: 0.6952 - val_accuracy: 0.2468
+- Elapsed time: 1:41:12.714469
+
+model 15
+- worse than expected model 14 performance. Either caused by addition layer or more complex models, still unknown.
+- reduce complexity with 0.25 filters_mult
+- split single stack conv layer for each sub-block
+- use 2 addition layer in each block, instead of 1.
+- turn back to 3 kernel_size
+- Total params: 60,453
+- 4992s 273ms/step - loss: 0.6131 - accuracy: 0.5541 - val_loss: 0.6332 - val_accuracy: 0.5435
+- Elapsed time: 1:23:12.355168
+
+model 16
+- please refer to model 12 structure
+- retrain model 12 with full idx data
+- batch_size = 128
+- progress: epochs=2
+10563/10563 [==============================] - 8910s 843ms/step - loss: 0.6187 - accuracy: 0.5491 - val_loss: 0.5989 - val_accuracy: 0.5865
+Elapsed time: 2:28:29.968482
+
+model 17
+- please refer to model 12 structure
+- retrain model 12 with +/- 4000 us data (40/62 progress)
+- batch_size = 128
